@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,6 +26,8 @@ import AdminMessages from "./pages/admin/AdminMessages";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminIoT from "./pages/admin/AdminIoT";
 import NotFound from "./pages/NotFound";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,8 @@ const App = () => (
             <Route path="/booking" element={<BookingProcess />} />
             <Route path="/booking-confirmation" element={<BookingConfirmation />} />
             <Route path="/booking-success/:id" element={<BookingSuccessPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             
             {/* Routes Admin */}
             <Route path="/admin" element={<AdminDashboard />} />

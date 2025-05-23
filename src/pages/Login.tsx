@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +12,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,7 +37,13 @@ export default function Login() {
           title: "Connexion réussie",
           description: isAdminLogin ? "Bienvenue dans l'interface administrateur" : "Bienvenue sur AutoWise",
         });
-        navigate(isAdminLogin ? "/admin" : "/");
+        // Redirection intelligente après login
+        const from = (location.state as any)?.from;
+        if (from) {
+          navigate(from, { replace: true });
+        } else {
+          navigate(isAdminLogin ? "/admin" : "/");
+        }
       }
     } catch (error) {
       console.error("Login error:", error);
