@@ -14,6 +14,7 @@ export interface User {
   notificationPreferences?: NotificationPreferences;
   locationPreferences?: LocationPreferences;
   createdAt: string;
+  isActive?: boolean; // Ajouté pour la gestion du blocage/déblocage
 }
 
 export interface NotificationPreferences {

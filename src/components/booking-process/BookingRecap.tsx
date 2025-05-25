@@ -1,4 +1,3 @@
-
 import { format, isValid } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Car } from "@/lib/types";
@@ -15,6 +14,7 @@ interface BookingRecapProps {
     gps: boolean;
     additionalDriver: boolean;
     totalPrice: number;
+    wifiHotspot: boolean;
   };
   formatPrice: (price: number) => string;
 }
@@ -57,50 +57,60 @@ export function BookingRecap({ car, bookingData, formatPrice }: BookingRecapProp
         
         <div className="flex justify-between border-b pb-2">
           <span>Prix de base</span>
-          <span>{formatPrice(car.dailyPrice)} / jour</span>
+          <span>{car.dailyPrice} TND/jour × {bookingData.totalDays} = <b>{car.dailyPrice * bookingData.totalDays} TND</b></span>
         </div>
         
         {bookingData.driverIncluded && (
           <div className="flex justify-between border-b pb-2 text-autowise-blue">
             <span>Chauffeur</span>
-            <span>+ 100 TND / jour</span>
+            <span>80 TND/jour × {bookingData.totalDays} = <b>{80 * bookingData.totalDays} TND</b></span>
           </div>
         )}
         
-        {bookingData.carInsurance !== "standard" && (
+        {bookingData.carInsurance === "full" && (
           <div className="flex justify-between border-b pb-2 text-autowise-blue">
-            <span>
-              Assurance {bookingData.carInsurance === "full" ? "complète" : "premium"}
-            </span>
-            <span>
-              + {bookingData.carInsurance === "full" ? "30" : "50"} TND / jour
-            </span>
+            <span>Assurance complète</span>
+            <span>12 TND/jour × {bookingData.totalDays} = <b>{12 * bookingData.totalDays} TND</b></span>
+          </div>
+        )}
+        
+        {bookingData.carInsurance === "premium" && (
+          <div className="flex justify-between border-b pb-2 text-autowise-blue">
+            <span>Assurance premium</span>
+            <span>25 TND/jour × {bookingData.totalDays} = <b>{25 * bookingData.totalDays} TND</b></span>
           </div>
         )}
         
         {bookingData.childSeat && (
           <div className="flex justify-between border-b pb-2 text-autowise-blue">
             <span>Siège enfant</span>
-            <span>+ 20 TND / jour</span>
+            <span>8 TND/jour × {bookingData.totalDays} = <b>{8 * bookingData.totalDays} TND</b></span>
           </div>
         )}
         
         {bookingData.gps && (
           <div className="flex justify-between border-b pb-2 text-autowise-blue">
             <span>GPS</span>
-            <span>+ 10 TND / jour</span>
+            <span>5 TND/jour × {bookingData.totalDays} = <b>{5 * bookingData.totalDays} TND</b></span>
           </div>
         )}
         
         {bookingData.additionalDriver && (
           <div className="flex justify-between border-b pb-2 text-autowise-blue">
             <span>Conducteur supplémentaire</span>
-            <span>+ 30 TND / jour</span>
+            <span>30 TND/jour × {bookingData.totalDays} = <b>{30 * bookingData.totalDays} TND</b></span>
+          </div>
+        )}
+        
+        {bookingData.wifiHotspot && (
+          <div className="flex justify-between border-b pb-2 text-autowise-blue">
+            <span>WiFi</span>
+            <span>6 TND/jour × {bookingData.totalDays} = <b>{6 * bookingData.totalDays} TND</b></span>
           </div>
         )}
         
         <div className="flex justify-between pt-2">
-          <span className="font-bold">Total</span>
+          <span className="font-bold">Total à payer</span>
           <span className="font-bold">{formatPrice(bookingData.totalPrice)}</span>
         </div>
       </div>

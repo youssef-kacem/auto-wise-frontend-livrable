@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { UserPlus, Search, Eye, Edit, Trash2, Mail } from "lucide-react";
+import { UserPlus, Search, Eye, Edit, Trash2, Mail, Ban, Lock, Unlock, MessageSquare, History, ListChecks } from "lucide-react";
 import { users } from "@/lib/mockData";
 import { User } from "@/lib/types";
 import {
@@ -31,6 +30,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 
 export default function UserManagement() {
   const [filteredUsers, setFilteredUsers] = useState<User[]>(users);
@@ -123,6 +123,63 @@ export default function UserManagement() {
     toast.success("Email copié dans le presse-papier");
   };
 
+  // Nouveau composant pour le menu d'actions utilisateur
+  function UserActionsMenu({ user, onMessage, onEdit, onDelete, onToggleActive, onViewReservations, onViewHistory }: {
+    user: User;
+    onMessage: () => void;
+    onEdit: () => void;
+    onDelete: () => void;
+    onToggleActive: () => void;
+    onViewReservations: () => void;
+    onViewHistory: () => void;
+  }) {
+    return (
+      <div className="flex items-center gap-2">
+        <Button size="icon" variant="ghost" title="Envoyer un message" onClick={onMessage}>
+          <Mail className="w-4 h-4" />
+        </Button>
+        <Button size="icon" variant="ghost" title="Modifier le profil" onClick={onEdit}>
+          <Edit className="w-4 h-4" />
+        </Button>
+        <Button size="icon" variant="ghost" title="Voir réservations" onClick={onViewReservations}>
+          <ListChecks className="w-4 h-4" />
+        </Button>
+        <Button size="icon" variant="ghost" title="Historique de connexion" onClick={onViewHistory}>
+          <History className="w-4 h-4" />
+        </Button>
+        <Button size="icon" variant="ghost" title={user.isActive ? "Bloquer l'utilisateur" : "Débloquer l'utilisateur"} onClick={onToggleActive}>
+          {user.isActive ? <Ban className="w-4 h-4 text-red-500" /> : <Unlock className="w-4 h-4 text-green-600" />}
+        </Button>
+        <Button size="icon" variant="ghost" title="Supprimer" onClick={onDelete}>
+          <Trash2 className="w-4 h-4 text-destructive" />
+        </Button>
+      </div>
+    );
+  }
+
+  // Ajouter la gestion du blocage/déblocage
+  const handleToggleActive = (user: User) => {
+    setFilteredUsers((prev) =>
+      prev.map((u) =>
+        u.id === user.id ? { ...u, isActive: !u.isActive } : u
+      )
+    );
+    toast.success(
+      user.isActive
+        ? `Utilisateur ${user.firstName} ${user.lastName} bloqué.`
+        : `Utilisateur ${user.firstName} ${user.lastName} débloqué.`
+    );
+  };
+
+  // Mock pour voir réservations et historique
+  const handleViewReservations = (user: User) => {
+    // Redirection simulée
+    toast.info(`Voir les réservations de ${user.firstName} ${user.lastName}`);
+  };
+  const handleViewHistory = (user: User) => {
+    toast.info(`Historique de connexion de ${user.firstName} ${user.lastName} (mock)`);
+  };
+
   return (
     <AdminLayout 
       title="Gestion des utilisateurs" 
@@ -164,7 +221,7 @@ export default function UserManagement() {
           </TableHeader>
           <TableBody>
             {filteredUsers.map((user) => (
-              <TableRow key={user.id}>
+              <TableRow key={user.id} className={user.isActive === false ? "opacity-60" : ""}>
                 <TableCell className="font-mono text-xs text-gray-500">
                   {user.id.substring(0, 8)}
                 </TableCell>
@@ -196,94 +253,32 @@ export default function UserManagement() {
                             )}
                           </Avatar>
                           <p className="font-semibold">{user.firstName} {user.lastName}</p>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="w-full"
-                            onClick={() => handleViewDetails(user)}
-                          >
-                            Voir le profil complet
+                          {user.isActive === false && (
+                            <Badge variant="destructive" className="mt-1 flex items-center gap-1"><Lock className="w-3 h-3 mr-1" /> Bloqué</Badge>
+                          )}
+                          <Button size="sm" variant="outline" onClick={() => handleCopyEmail(user.email)}>
+                            Copier l'email
                           </Button>
                         </div>
                       </PopoverContent>
                     </Popover>
-                    <div>
-                      <div className="font-medium">
-                        {user.firstName} {user.lastName}
-                      </div>
-                    </div>
+                    <span>{user.firstName} {user.lastName}</span>
                   </div>
                 </TableCell>
-                <TableCell>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <span className="cursor-pointer text-blue-600 hover:underline">
-                        {user.email}
-                      </span>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-52">
-                      <div className="flex flex-col space-y-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="w-full"
-                          onClick={() => handleCopyEmail(user.email)}
-                        >
-                          Copier l'email
-                        </Button>
-                        <Button 
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => handleOpenMessageDialog(user)}
-                        >
-                          Envoyer un email
-                        </Button>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </TableCell>
+                <TableCell>{user.email}</TableCell>
                 <TableCell>{user.phoneNumber}</TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    user.role === "admin" 
-                      ? "bg-blue-100 text-blue-800" 
-                      : "bg-green-100 text-green-800"
-                  }`}>
-                    {user.role === "admin" ? "Admin" : "Client"}
-                  </span>
-                </TableCell>
+                <TableCell>{user.role === "admin" ? <Badge variant="secondary">Admin</Badge> : "Client"}</TableCell>
                 <TableCell>{formatDate(user.createdAt)}</TableCell>
                 <TableCell className="text-right">
-                  <div className="flex items-center justify-end space-x-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      title="Voir" 
-                      onClick={() => handleViewDetails(user)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" title="Modifier">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      title="Envoyer un message" 
-                      onClick={() => handleOpenMessageDialog(user)}
-                    >
-                      <Mail className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      title="Supprimer"
-                      onClick={() => handleOpenDeleteDialog(user)}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
+                  <UserActionsMenu
+                    user={user}
+                    onMessage={() => handleOpenMessageDialog(user)}
+                    onEdit={() => handleViewDetails(user)}
+                    onDelete={() => handleOpenDeleteDialog(user)}
+                    onToggleActive={() => handleToggleActive(user)}
+                    onViewReservations={() => handleViewReservations(user)}
+                    onViewHistory={() => handleViewHistory(user)}
+                  />
                 </TableCell>
               </TableRow>
             ))}

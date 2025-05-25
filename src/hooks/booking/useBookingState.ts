@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DateRange } from "react-day-picker";
@@ -52,24 +51,42 @@ export function useBookingState() {
   
   // Update booking data with car info
   const updateBookingWithCarInfo = (carId: string, dailyPrice: number) => {
-    setBookingData(prev => ({
-      ...prev,
-      carId: carId,
-      totalPrice: calculateTotalPrice(dailyPrice, 3, false, "standard", false, false, false, false)
-    }));
-    
-    // Update dates and duration
     if (date?.from && date?.to) {
       const startDate = format(date.from, 'yyyy-MM-dd');
       const endDate = format(date.to, 'yyyy-MM-dd');
       const days = calculateDaysDifference(date.from, date.to);
-      
+
       setBookingData(prev => ({
         ...prev,
+        carId,
         startDate,
         endDate,
         totalDays: days,
-        totalPrice: calculateTotalPrice(dailyPrice, days, false, "standard", false, false, false, false)
+        totalPrice: calculateTotalPrice(
+          dailyPrice,
+          days,
+          prev.driverIncluded,
+          prev.carInsurance,
+          prev.childSeat,
+          prev.gps,
+          prev.additionalDriver,
+          prev.wifiHotspot
+        )
+      }));
+    } else {
+      setBookingData(prev => ({
+        ...prev,
+        carId,
+        totalPrice: calculateTotalPrice(
+          dailyPrice,
+          1,
+          prev.driverIncluded,
+          prev.carInsurance,
+          prev.childSeat,
+          prev.gps,
+          prev.additionalDriver,
+          prev.wifiHotspot
+        )
       }));
     }
   };

@@ -1,4 +1,3 @@
-
 import { Car, Message, Notification, Reservation, User, ReservationStatus } from "./types";
 
 // Mock Users
@@ -20,6 +19,7 @@ export const users: User[] = [
       sms: false,
     },
     createdAt: "2023-01-15T12:00:00.000Z",
+    isActive: true,
   },
   {
     id: "user-2",
@@ -38,6 +38,7 @@ export const users: User[] = [
       sms: true,
     },
     createdAt: "2023-02-20T09:30:00.000Z",
+    isActive: false,
   },
   {
     id: "admin-1",
@@ -48,6 +49,7 @@ export const users: User[] = [
     phoneNumber: "98765432",
     createdAt: "2022-12-01T10:00:00.000Z",
     profilePicture: "/placeholder.svg",
+    isActive: true,
   },
 ];
 

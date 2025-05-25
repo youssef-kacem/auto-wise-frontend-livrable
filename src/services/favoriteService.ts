@@ -1,4 +1,3 @@
-
 import { Car } from "@/lib/types";
 
 // Clés pour le stockage local des favoris et de l'historique
@@ -10,7 +9,12 @@ export const favoriteService = {
   // Obtenir toutes les voitures favorites
   getFavorites: (): string[] => {
     const storedFavorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
-    return storedFavorites ? JSON.parse(storedFavorites) : [];
+    try {
+      const parsed = storedFavorites ? JSON.parse(storedFavorites) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   },
 
   // Vérifier si une voiture est dans les favoris
@@ -74,7 +78,12 @@ export const favoriteService = {
   // Obtenir l'historique des voitures consultées
   getHistory: (): string[] => {
     const storedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
-    return storedHistory ? JSON.parse(storedHistory) : [];
+    try {
+      const parsed = storedHistory ? JSON.parse(storedHistory) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   },
   
   // Obtenir les voitures récemment consultées avec leurs détails

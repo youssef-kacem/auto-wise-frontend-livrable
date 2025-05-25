@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -79,7 +78,7 @@ export function EnhancedCarCard({ car }: EnhancedCarCardProps) {
           </span>
         </Button>
 
-        <Link to={`/cars/${car.id}`} className="block">
+        <Link to={`/cars/${car.id}`} className="block group">
           {/* Image avec effet de zoom */}
           <div className="relative h-48 overflow-hidden">
             <img
@@ -104,67 +103,60 @@ export function EnhancedCarCard({ car }: EnhancedCarCardProps) {
               {formatPrice(car.dailyPrice)}<span className="text-xs ml-1">/jour</span>
             </Badge>
           </div>
+          {/* Contenu de la carte (en-tête, specs, tags, bouton) */}
+          <CardContent className="p-4 flex flex-col flex-grow">
+            {/* En-tête de la carte */}
+            <div className="mb-3">
+              <div className="flex justify-between items-start">
+                <h3 className="font-bold text-lg">
+                  {car.brand} {car.model}
+                </h3>
+              </div>
+              <p className="text-sm text-gray-500">{car.year}</p>
+            </div>
+
+            {/* Caractéristiques principales */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <div className="flex items-center text-sm text-gray-600">
+                <User className="h-4 w-4 mr-1" />
+                <span>{car.seats} places</span>
+              </div>
+              <div className="flex items-center text-sm text-gray-600">
+                <Gauge className="h-4 w-4 mr-1" />
+                <span>{car.transmission}</span>
+              </div>
+              <div className="flex items-center text-sm text-gray-600">
+                <Fuel className="h-4 w-4 mr-1" />
+                <span>{car.fuelType}</span>
+              </div>
+              <div className="flex items-center text-sm text-gray-600">
+                <Car className="h-4 w-4 mr-1" />
+                <span>{car.category}</span>
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {getTags().map((tag, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded"
+                >
+                  {tag === "Climatisation" && <Snowflake className="h-3 w-3 mr-1" />}
+                  {tag}
+                </span>
+              ))}
+            </div>
+
+            {/* Bouton de détails (n'est plus un <Link> imbriqué) */}
+            <div className="mt-auto pt-3 border-t flex justify-center">
+              <span className="w-full text-center text-autowise-blue font-semibold group-hover:underline">
+                Voir les détails
+              </span>
+            </div>
+          </CardContent>
         </Link>
       </div>
-
-      <Link to={`/cars/${car.id}`} className="flex flex-col flex-grow">
-        <CardContent className="p-4 flex flex-col flex-grow">
-          {/* En-tête de la carte */}
-          <div className="mb-3">
-            <div className="flex justify-between items-start">
-              <h3 className="font-bold text-lg">
-                {car.brand} {car.model}
-              </h3>
-            </div>
-            <p className="text-sm text-gray-500">{car.year}</p>
-          </div>
-
-          {/* Caractéristiques principales */}
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            <div className="flex items-center text-sm text-gray-600">
-              <User className="h-4 w-4 mr-1" />
-              <span>{car.seats} places</span>
-            </div>
-            <div className="flex items-center text-sm text-gray-600">
-              <Gauge className="h-4 w-4 mr-1" />
-              <span>{car.transmission}</span>
-            </div>
-            <div className="flex items-center text-sm text-gray-600">
-              <Fuel className="h-4 w-4 mr-1" />
-              <span>{car.fuelType}</span>
-            </div>
-            <div className="flex items-center text-sm text-gray-600">
-              <Car className="h-4 w-4 mr-1" />
-              <span>{car.category}</span>
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2 mb-3">
-            {getTags().map((tag, index) => (
-              <span
-                key={index}
-                className="inline-flex items-center text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded"
-              >
-                {tag === "Climatisation" && <Snowflake className="h-3 w-3 mr-1" />}
-                {tag}
-              </span>
-            ))}
-          </div>
-
-          {/* Bouton de détails */}
-          <div className="mt-auto pt-3 border-t flex justify-center">
-            <Button
-              className="w-full bg-autowise-blue hover:bg-autowise-navy"
-              asChild
-            >
-              <Link to={`/cars/${car.id}`}>
-                Voir les détails
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Link>
     </Card>
   );
 }

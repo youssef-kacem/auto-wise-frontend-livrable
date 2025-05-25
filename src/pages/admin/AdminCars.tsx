@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import { Edit, Trash, Plus, Search, Upload, X, Image } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 
 export default function AdminCars() {
   const [cars, setCars] = useState<Car[]>([]);
@@ -24,6 +24,7 @@ export default function AdminCars() {
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [availabilityState, setAvailabilityState] = useState<{ [carId: string]: boolean }>({});
   
   const [formData, setFormData] = useState({
     brand: "",
@@ -77,6 +78,17 @@ export default function AdminCars() {
       setFilteredCars(cars);
     }
   }, [searchTerm, cars]);
+
+  useEffect(() => {
+    // Initialiser l'état local de disponibilité à partir des données chargées
+    if (cars.length > 0) {
+      const initialAvailability: { [carId: string]: boolean } = {};
+      cars.forEach(car => {
+        initialAvailability[car.id] = car.availability?.available ?? true;
+      });
+      setAvailabilityState(initialAvailability);
+    }
+  }, [cars]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -286,6 +298,18 @@ export default function AdminCars() {
         });
       }
     }
+  };
+
+  const handleToggleAvailability = (carId: string) => {
+    setAvailabilityState(prev => {
+      const newState = { ...prev, [carId]: !prev[carId] };
+      // Toast contextuel
+      toast({
+        title: newState[carId] ? "La voiture est maintenant disponible." : "La voiture est maintenant indisponible.",
+        variant: newState[carId] ? "default" : "destructive",
+      });
+      return newState;
+    });
   };
 
   const CarForm = () => (
@@ -622,9 +646,31 @@ export default function AdminCars() {
                       <TableCell>{car.category}</TableCell>
                       <TableCell>{car.dailyPrice} TND</TableCell>
                       <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs ${car.availability ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                          {car.availability ? 'Disponible' : 'Indisponible'}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={!!availabilityState[car.id]}
+                            onCheckedChange={() => handleToggleAvailability(car.id)}
+                            className={
+                              availabilityState[car.id]
+                                ? "data-[state=checked]:bg-green-500"
+                                : "data-[state=unchecked]:bg-gray-300"
+                            }
+                          />
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${
+                              availabilityState[car.id]
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {availabilityState[car.id] ? (
+                              <svg className="w-3 h-3 mr-1 text-green-500" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" /></svg>
+                            ) : (
+                              <svg className="w-3 h-3 mr-1 text-red-500" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" /></svg>
+                            )}
+                            {availabilityState[car.id] ? "Disponible" : "Indisponible"}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
