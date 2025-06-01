@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -20,6 +19,7 @@ import { PaymentMethods } from "./PaymentMethods";
 import { PaymentStatusDisplay } from "./PaymentStatusDisplay";
 import { PaymentIcon } from "./PaymentUtils";
 import { usePaymentForm } from "@/hooks/payment/usePaymentForm";
+import { reservationService } from "@/services/reservationService";
 
 interface PaymentFormProps {
   reservationId: string;
@@ -39,6 +39,32 @@ export function PaymentForm({ reservationId, amount, onSuccess }: PaymentFormPro
     handleSubmit,
     handleInputChange
   } = usePaymentForm(reservationId, amount, onSuccess);
+
+  const [submitting, setSubmitting] = useState(false);
+
+  // Nouvelle fonction pour confirmer sans paiement
+  const handleConfirmWithoutPayment = async () => {
+    setSubmitting(true);
+    try {
+      // Créer une réservation avec paymentStatus 'pending'
+      await reservationService.updateReservationStatus(reservationId, "en attente");
+      // Rediriger vers le profil ou afficher un toast
+      toast({
+        title: "Réservation confirmée",
+        description: "Votre réservation a été enregistrée et est en attente de paiement.",
+      });
+      if (onSuccess) onSuccess();
+      else navigate("/profile");
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de confirmer la réservation sans paiement.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // Display appropriate component based on the step
   if (step !== "form") {
@@ -84,16 +110,27 @@ export function PaymentForm({ reservationId, amount, onSuccess }: PaymentFormPro
           </div>
         </form>
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={() => navigate(-1)}>Annuler</Button>
-        <Button 
-          onClick={handleSubmit} 
-          disabled={loading || step !== "form"}
-          className="min-w-[120px]"
-        >
-          {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <PaymentIcon method={selectedMethod} />}
-          <span className="ml-2">Payer</span>
-        </Button>
+      <CardFooter className="flex flex-col md:flex-row gap-2 md:gap-4 justify-between items-center">
+        <Button variant="outline" onClick={() => navigate(-1)} disabled={submitting}>Annuler</Button>
+        <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto">
+          <Button 
+            type="button"
+            variant="secondary"
+            onClick={handleConfirmWithoutPayment}
+            disabled={submitting || loading || step !== "form"}
+            className="w-full md:w-auto"
+          >
+            Confirmer la réservation sans paiement
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={loading || submitting || step !== "form"}
+            className="min-w-[120px] w-full md:w-auto"
+          >
+            {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <PaymentIcon method={selectedMethod} />}
+            <span className="ml-2">Confirmer et payer</span>
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );

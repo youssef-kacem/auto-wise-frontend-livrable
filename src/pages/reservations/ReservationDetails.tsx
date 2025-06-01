@@ -44,8 +44,8 @@ export default function ReservationDetails() {
   if (notFound || !reservation) return (
     <div className="p-8 text-center">
       <h2 className="text-2xl font-bold mb-2">404</h2>
-      <p>Réservation introuvable.</p>
-      <Button className="mt-4" onClick={() => navigate(-1)}>Retour</Button>
+      <p>Réservation introuvable ou supprimée.</p>
+      <Button className="mt-4" onClick={() => navigate('/profile')}>Retour à mes réservations</Button>
     </div>
   );
 

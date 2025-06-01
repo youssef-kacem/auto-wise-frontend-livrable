@@ -9,6 +9,7 @@ import {
   NotFoundMessage
 } from "@/components/payment";
 import jsPDF from "jspdf";
+import { PaymentForm } from "@/components/payment/PaymentForm";
 
 export default function Payment() {
   const {
@@ -114,22 +115,30 @@ export default function Payment() {
       <main className="flex-grow py-8">
         <div className="container mx-auto max-w-3xl px-4">
           <Breadcrumbs />
-          
-          <PaymentStatus 
-            status={paymentStatus} 
-            reservationId={id} 
-            setPaymentStatus={setPaymentStatus} 
-          />
-          
-          {/* Récapitulatif de la réservation */}
-          <PaymentRecap reservation={reservation} />
-          {/* Bouton PDF */}
-          <button
-            onClick={generatePDF}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Télécharger la facture PDF
-          </button>
+
+          {/* Affichage conditionnel selon le statut réel de paiement */}
+          {paymentStatus === "pending" ? (
+            <PaymentForm reservationId={reservation.id} amount={reservation.totalPrice} />
+          ) : paymentStatus === "paid" ? (
+            <>
+              <PaymentStatus 
+                status="success"
+                reservationId={id}
+                setPaymentStatus={setPaymentStatus}
+              />
+              <PaymentRecap reservation={reservation} />
+              <button
+                onClick={generatePDF}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Télécharger la facture PDF
+              </button>
+            </>
+          ) : (
+            <div className="text-center text-red-600 font-bold py-8">
+              Statut de paiement inconnu ou non géré.
+            </div>
+          )}
         </div>
       </main>
       <Footer />

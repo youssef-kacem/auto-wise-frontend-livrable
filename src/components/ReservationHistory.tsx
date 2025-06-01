@@ -240,7 +240,8 @@ export function ReservationHistory() {
                       </Link>
                     </Button>
                     
-                    {(reservation.paymentStatus === "pending") && (
+                    {/* Bouton Payer uniquement si la réservation est en attente */}
+                    {reservation.paymentStatus === "pending" && (
                       <Button 
                         size="sm"
                         className="w-full"
@@ -253,6 +254,8 @@ export function ReservationHistory() {
                       </Button>
                     )}
                     
+                    {/* Empêcher l'accès au paiement si déjà payé (pas de bouton) */}
+                    {/* Bouton Détails toujours accessible */}
                     <Button 
                       variant="ghost" 
                       size="sm" 

@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -10,7 +9,7 @@ import { CreditCard } from "lucide-react";
 interface PaymentStepProps {
   paymentMethod: string;
   handlePaymentMethodChange: (value: string) => void;
-  handleSubmitBooking: () => void;
+  handleSubmitBooking: (status: string) => void;
   handlePreviousStep: () => void;
 }
 
@@ -115,13 +114,26 @@ export function PaymentStep({
         </div>
       </div>
       
-      <div className="flex justify-between mt-6">
+      <div className="flex justify-between mt-6 gap-2 flex-col md:flex-row">
         <Button variant="outline" onClick={handlePreviousStep}>
           Retour
         </Button>
-        <Button onClick={handleSubmitBooking} className="bg-autowise-blue hover:bg-autowise-navy">
-          Confirmer et payer
-        </Button>
+        <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => handleSubmitBooking("pending")}
+            className="w-full md:w-auto"
+          >
+            Confirmer la réservation sans paiement
+          </Button>
+          <Button
+            onClick={() => handleSubmitBooking("paid")}
+            className="bg-autowise-blue hover:bg-autowise-navy w-full md:w-auto"
+          >
+            Confirmer et payer
+          </Button>
+        </div>
       </div>
     </Card>
   );
