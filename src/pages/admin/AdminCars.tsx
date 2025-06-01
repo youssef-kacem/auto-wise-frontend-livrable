@@ -3,7 +3,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Car } from "@/lib/types";
 import { carService } from "@/services/carService";
@@ -12,6 +12,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import { Calendar } from "@/components/ui/calendar";
 
 export default function AdminCars() {
   const [cars, setCars] = useState<Car[]>([]);
@@ -30,10 +31,10 @@ export default function AdminCars() {
     brand: "",
     model: "",
     year: 2023,
-    category: "standard" as "économique" | "standard" | "premium" | "luxe" | "utilitaire", // Typed properly
+    category: "standard" as "économique" | "standard" | "premium" | "luxe" | "utilitaire",
     dailyPrice: 100,
-    transmission: "automatique" as "manuel" | "automatique", // Typed properly
-    fuelType: "essence" as "essence" | "diesel" | "électrique" | "hybride", // Typed properly
+    transmission: "automatique" as "manuel" | "automatique",
+    fuelType: "essence" as "essence" | "diesel" | "électrique" | "hybride",
     hasAC: true,
     seats: 5,
     driverAvailable: false,
@@ -41,7 +42,8 @@ export default function AdminCars() {
     childSeatAvailable: false,
     description: "",
     features: ["Climatisation"],
-    location: "Tunis Centre"
+    location: "Tunis Centre",
+    availabilityPeriod: { from: undefined, to: undefined } as { from: Date | undefined; to: Date | undefined }
   });
 
   useEffect(() => {
@@ -110,7 +112,21 @@ export default function AdminCars() {
     }));
   };
 
+  const handleAvailabilityPeriodChange = (range: { from?: Date; to?: Date }) => {
+    setFormData(prev => ({
+      ...prev,
+      availabilityPeriod: range
+    }));
+  };
+
   const openEditDialog = (car: Car) => {
+    let from: Date | undefined = undefined;
+    let to: Date | undefined = undefined;
+    if (car.availability?.availableDates && car.availability.availableDates.length > 0) {
+      const range = car.availability.availableDates[0];
+      from = range.startDate ? new Date(range.startDate) : undefined;
+      to = range.endDate ? new Date(range.endDate) : undefined;
+    }
     setSelectedCar(car);
     setFormData({
       brand: car.brand,
@@ -127,7 +143,8 @@ export default function AdminCars() {
       childSeatAvailable: car.childSeatAvailable,
       description: car.description,
       features: car.features || [],
-      location: car.location || "Tunis Centre"
+      location: car.location || "Tunis Centre",
+      availabilityPeriod: { from, to }
     });
     setImagePreviewUrls(car.images || []);
     setUploadedImages([]);
@@ -151,7 +168,8 @@ export default function AdminCars() {
       childSeatAvailable: false,
       description: "",
       features: ["Climatisation"],
-      location: "Tunis Centre"
+      location: "Tunis Centre",
+      availabilityPeriod: { from: undefined, to: undefined }
     });
     setImagePreviewUrls([]);
     setUploadedImages([]);
@@ -215,19 +233,35 @@ export default function AdminCars() {
     setSubmitting(true);
     
     try {
+      if (!formData.availabilityPeriod.from || !formData.availabilityPeriod.to) {
+        toast({
+          variant: "destructive",
+          title: "Période requise",
+          description: "Veuillez sélectionner une période de disponibilité."
+        });
+        setSubmitting(false);
+        return;
+      }
+      const availability = {
+        available: true,
+        availableDates: [
+          {
+            startDate: formData.availabilityPeriod.from.toISOString(),
+            endDate: formData.availabilityPeriod.to.toISOString()
+          }
+        ]
+      };
       if (selectedCar) {
-        // Mode édition - Ensure we're sending the correct types to the API
+        // Mode édition
         const typedFormData = {
           ...formData,
           category: formData.category as "économique" | "standard" | "premium" | "luxe" | "utilitaire",
           transmission: formData.transmission as "manuel" | "automatique",
           fuelType: formData.fuelType as "essence" | "diesel" | "électrique" | "hybride",
+          availability
         };
-        
         const updatedCar = await carService.updateCar(selectedCar.id, typedFormData, uploadedImages);
-        
         setCars(prev => prev.map(car => car.id === selectedCar.id ? updatedCar : car));
-        
         toast({
           title: "Véhicule modifié",
           description: `${formData.brand} ${formData.model} a été mis à jour avec succès.`
@@ -244,26 +278,21 @@ export default function AdminCars() {
           setSubmitting(false);
           return;
         }
-        
-        // Make sure we're sending properly typed data
         const typedFormData = {
           ...formData,
           category: formData.category as "économique" | "standard" | "premium" | "luxe" | "utilitaire",
           transmission: formData.transmission as "manuel" | "automatique",
           fuelType: formData.fuelType as "essence" | "diesel" | "électrique" | "hybride",
+          availability
         };
-        
         const newCar = await carService.addCar(typedFormData, uploadedImages);
-        
         setCars(prev => [...prev, newCar]);
-        
         toast({
           title: "Véhicule ajouté",
           description: `${formData.brand} ${formData.model} a été ajouté avec succès.`
         });
         setShowAddDialog(false);
       }
-      
       setFilteredCars(cars);
     } catch (error) {
       console.error("Error submitting car:", error);
@@ -521,6 +550,29 @@ export default function AdminCars() {
       </div>
 
       <div>
+        <Label className="mb-1 block">Disponibilité</Label>
+        <div className="flex flex-col md:flex-row gap-4 items-center">
+          <div className="w-full">
+            <Calendar
+              mode="range"
+              selected={formData.availabilityPeriod}
+              onSelect={handleAvailabilityPeriodChange}
+              numberOfMonths={2}
+              required
+              disabled={{ before: new Date() }}
+            />
+          </div>
+          <div className="flex flex-col gap-2 min-w-[180px]">
+            <span className="text-sm text-gray-600">
+              {formData.availabilityPeriod.from && formData.availabilityPeriod.to
+                ? `Du ${formData.availabilityPeriod.from.toLocaleDateString()} au ${formData.availabilityPeriod.to.toLocaleDateString()}`
+                : "Sélectionnez une période de disponibilité"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div>
         <Label className="mb-1 block">Images du véhicule</Label>
         <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {imagePreviewUrls.map((url, index) => (
@@ -696,6 +748,7 @@ export default function AdminCars() {
         <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Ajouter un nouveau véhicule</DialogTitle>
+            <DialogDescription>Remplissez le formulaire pour ajouter un véhicule à la flotte.</DialogDescription>
           </DialogHeader>
           <CarForm />
         </DialogContent>
@@ -706,6 +759,7 @@ export default function AdminCars() {
         <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Modifier un véhicule</DialogTitle>
+            <DialogDescription>Modifiez les informations du véhicule sélectionné.</DialogDescription>
           </DialogHeader>
           <CarForm />
         </DialogContent>

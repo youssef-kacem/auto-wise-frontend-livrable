@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +17,7 @@ export function ReservationHistory() {
   const { user } = useAuth();
   const [reservations, setReservations] = useState<ReservationWithCar[]>([]);
   const [loading, setLoading] = useState(true);
+  const [existingReservationIds, setExistingReservationIds] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -51,6 +51,12 @@ export function ReservationHistory() {
 
     fetchReservations();
   }, [user]);
+
+  useEffect(() => {
+    reservationService.getAllReservations().then(resList => {
+      setExistingReservationIds(resList.map(r => r.id));
+    });
+  }, []);
 
   // Fonction pour obtenir la couleur du badge de statut
   const getStatusBadgeColor = (status: string) => {
@@ -100,6 +106,9 @@ export function ReservationHistory() {
     }
   };
 
+  // Filtrer les réservations pour n'afficher que celles qui existent vraiment dans les mocks
+  const filteredReservations = reservations.filter(r => existingReservationIds.includes(r.id));
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -135,7 +144,7 @@ export function ReservationHistory() {
     );
   }
 
-  if (reservations.length === 0) {
+  if (filteredReservations && filteredReservations.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -163,7 +172,7 @@ export function ReservationHistory() {
         <h2 className="text-2xl font-bold">Mes réservations</h2>
       </div>
       
-      {reservations.map((reservation) => (
+      {filteredReservations.map((reservation) => (
         <Card key={reservation.id} className="overflow-hidden">
           <CardContent className="p-0">
             <div className="p-6">
@@ -249,6 +258,7 @@ export function ReservationHistory() {
                       size="sm" 
                       className="w-full"
                       asChild
+                      disabled={!reservation.id || !existingReservationIds.includes(reservation.id)}
                     >
                       <Link to={`/reservations/${reservation.id}`}>
                         <Info className="h-4 w-4 mr-2" />

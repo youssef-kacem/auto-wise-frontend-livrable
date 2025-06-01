@@ -289,6 +289,21 @@ export const reservations: Reservation[] = [
     withGPS: true,
     createdAt: "2023-08-10T14:20:00.000Z",
   },
+  {
+    id: "res-test",
+    userId: "user-1",
+    carId: "car-1",
+    startDate: "2025-06-05T10:00:00.000Z",
+    endDate: "2025-06-08T18:00:00.000Z",
+    totalPrice: 500,
+    status: "confirmed",
+    withDriver: true,
+    withChildSeat: true,
+    withGPS: true,
+    paymentMethod: "Carte bancaire",
+    createdAt: "2025-05-28T15:30:00.000Z",
+    paymentStatus: "paid"
+  },
 ];
 
 // Mock Messages

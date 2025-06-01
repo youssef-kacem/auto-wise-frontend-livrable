@@ -28,6 +28,7 @@ import AdminIoT from "./pages/admin/AdminIoT";
 import NotFound from "./pages/NotFound";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+import ReservationDetails from "./pages/reservations/ReservationDetails";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
             <Route path="/booking" element={<BookingProcess />} />
             <Route path="/booking-confirmation" element={<BookingConfirmation />} />
             <Route path="/booking-success/:id" element={<BookingSuccessPage />} />
+            <Route path="/reservations/res-:id" element={<ReservationDetails />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             

@@ -375,11 +375,16 @@ export const carService = {
           return false;
         }
         
-        // If the car has specific available date ranges, check against them
+        // Si le véhicule a des périodes de disponibilité définies, il faut que la période demandée soit entièrement incluse dans au moins une de ces périodes
         if (car.availability.availableDates && car.availability.availableDates.length > 0) {
-          // For simplicity, this is just a placeholder. In a real application, you'd
-          // need to check if the requested dates overlap with unavailable dates
-          return true;
+          const requestedFrom = filters.dateRange.from;
+          const requestedTo = filters.dateRange.to;
+          const isFullyIncluded = car.availability.availableDates.some(range => {
+            const start = new Date(range.startDate);
+            const end = new Date(range.endDate);
+            return start <= requestedFrom && end >= requestedTo;
+          });
+          return isFullyIncluded;
         }
         
         // No specific date restrictions, so the car is available

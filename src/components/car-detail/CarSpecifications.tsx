@@ -1,4 +1,3 @@
-
 import { Users, Fuel, Calendar, CarIcon, MapPin, Clock } from "lucide-react";
 import { Car } from "@/lib/types";
 
@@ -31,7 +30,13 @@ export function CarSpecifications({ car }: CarSpecificationsProps) {
       </div>
       <div className="flex items-center">
         <Clock className="h-5 w-5 mr-2 text-autowise-blue" />
-        <span>Disponible</span>
+        {car.availability?.availableDates && car.availability.availableDates.length > 0 ? (
+          <span className="font-semibold text-green-700">
+            Disponible du {new Date(car.availability.availableDates[0].startDate).toLocaleDateString()} au {new Date(car.availability.availableDates[0].endDate).toLocaleDateString()}
+          </span>
+        ) : (
+          <span>Disponible</span>
+        )}
       </div>
     </div>
   );
