@@ -19,19 +19,18 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isAdminLogin, setIsAdminLogin] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-
+    setErrorMessage("");
+    setFieldErrors({});
     try {
-      // Pour la connexion admin, email pré-configuré
       const emailToUse = isAdminLogin ? "admin@autowise.com" : email;
-      // Mot de passe fictif pour la démo, à remplacer par un vrai système d'authentification
       const passwordToUse = isAdminLogin ? "admin123" : password;
-      
       const success = await login(emailToUse, passwordToUse);
-      
       if (success) {
         toast({
           title: "Connexion réussie",
@@ -45,13 +44,18 @@ export default function Login() {
           navigate(isAdminLogin ? "/admin" : "/");
         }
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      toast({
-        title: "Erreur de connexion",
-        description: "Une erreur s'est produite. Veuillez réessayer.",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      if (error.violations) {
+        const errors: Record<string, string> = {};
+        error.violations.forEach((v: any) => {
+          errors[v.propertyPath] = v.message;
+        });
+        setFieldErrors(errors);
+      } else if (error.message) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("Erreur inconnue, veuillez réessayer.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -113,6 +117,9 @@ export default function Login() {
                   required
                   disabled={isAdminLogin || isLoading}
                 />
+                {fieldErrors.email && (
+                  <p className="text-red-500 text-sm">{fieldErrors.email}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -147,6 +154,9 @@ export default function Login() {
                     )}
                   </button>
                 </div>
+                {fieldErrors.password && (
+                  <p className="text-red-500 text-sm">{fieldErrors.password}</p>
+                )}
               </div>
 
               <Button
@@ -177,6 +187,11 @@ export default function Login() {
                 </button>
               </div>
             </form>
+            {errorMessage && (
+              <div className="text-center mt-4">
+                <p className="text-red-500">{errorMessage}</p>
+              </div>
+            )}
           </div>
         </div>
       </main>

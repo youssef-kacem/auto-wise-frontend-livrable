@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,105 +14,76 @@ export default function Register() {
   const navigate = useNavigate();
   const { register } = useAuth();
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    nom: "",
+    prenom: "",
     email: "",
-    phoneNumber: "",
-    password: "",
+    telephone: "",
+    plainPassword: "",
     confirmPassword: "",
   });
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
-    // Clear error when field is changed
-    if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
-    // Validate name fields
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = "Le prénom est requis";
-    }
-    
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = "Le nom est requis";
-    }
-    
-    // Validate email
-    if (!formData.email) {
-      newErrors.email = "L'email est requis";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Format d'email invalide";
-    }
-    
-    // Validate phone number (8 digits for Tunisia)
-    if (!formData.phoneNumber) {
-      newErrors.phoneNumber = "Le numéro de téléphone est requis";
-    } else if (!/^\d{8}$/.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = "Le numéro doit contenir 8 chiffres";
-    }
-    
-    // Validate password
-    if (!formData.password) {
-      newErrors.password = "Le mot de passe est requis";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Le mot de passe doit contenir au moins 8 caractères";
-    }
-    
-    // Validate password confirmation
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
-    }
-    
+    if (!formData.nom || typeof formData.nom !== 'string' || !formData.nom.trim()) newErrors.nom = "Le nom est requis";
+    if (!formData.prenom || typeof formData.prenom !== 'string' || !formData.prenom.trim()) newErrors.prenom = "Le prénom est requis";
+    if (!formData.email || typeof formData.email !== 'string') newErrors.email = "L'email est requis";
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Format d'email invalide";
+    if (!formData.telephone || typeof formData.telephone !== 'string') newErrors.telephone = "Le numéro de téléphone est requis";
+    else if (!/^\d{8}$/.test(formData.telephone)) newErrors.telephone = "Le numéro doit contenir 8 chiffres";
+    if (!formData.plainPassword || typeof formData.plainPassword !== 'string') newErrors.plainPassword = "Le mot de passe est requis";
+    else if (formData.plainPassword.length < 8) newErrors.plainPassword = "Au moins 8 caractères";
+    if (formData.plainPassword !== formData.confirmPassword) newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+    setSuccessMessage("");
+    setErrorMessage("");
+    setErrors({});
     if (!validateForm()) return;
-    
     setIsLoading(true);
-    
     try {
-      // Here you would handle file upload in a real app
-      // For now, we'll just pass the form data
-      const userData = {
-        ...formData,
-        profilePicture: profilePicture ? URL.createObjectURL(profilePicture) : undefined,
-      };
-      
-      const success = await register(userData, formData.password);
-      
+      const { confirmPassword, ...registerData } = formData;
+      const success = await register(registerData);
       if (success) {
-        toast({
-          title: "Inscription réussie",
-          description: "Votre compte a été créé avec succès",
+        setSuccessMessage("Inscription réussie ! Vérifiez votre email pour activer votre compte.");
+        setFormData({
+          nom: "",
+          prenom: "",
+          email: "",
+          telephone: "",
+          plainPassword: "",
+          confirmPassword: "",
         });
-        navigate("/");
       }
-    } catch (error) {
-      console.error("Registration error:", error);
-      toast({
-        title: "Erreur d'inscription",
-        description: "Une erreur s'est produite. Veuillez réessayer.",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      // Gestion des violations API Platform
+      if (error.violations) {
+        const fieldErrors: Record<string, string> = {};
+        error.violations.forEach((v: any) => {
+          // API Platform retourne 'propertyPath' et 'message'
+          fieldErrors[v.propertyPath] = v.message;
+        });
+        setErrors(fieldErrors);
+      } else if (error.message) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("Erreur inconnue, veuillez réessayer.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -141,6 +111,9 @@ export default function Register() {
               </p>
             </div>
 
+            {successMessage && <div className="text-green-600 mb-4">{successMessage}</div>}
+            {errorMessage && <div className="text-red-600 mb-4">{errorMessage}</div>}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Profile Picture */}
               <div className="flex justify-center">
@@ -153,37 +126,37 @@ export default function Register() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* First Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">Prénom</Label>
+                  <Label htmlFor="nom">Nom</Label>
                   <Input
-                    id="firstName"
-                    name="firstName"
-                    value={formData.firstName}
+                    id="nom"
+                    name="nom"
+                    value={formData.nom}
                     onChange={handleChange}
-                    placeholder="Prénom"
+                    placeholder="Nom"
                     required
                     disabled={isLoading}
-                    className={errors.firstName ? "border-red-500" : ""}
+                    className={errors.nom ? "border-red-500" : ""}
                   />
-                  {errors.firstName && (
-                    <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                  {errors.nom && (
+                    <p className="text-red-500 text-xs mt-1">{errors.nom}</p>
                   )}
                 </div>
 
                 {/* Last Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Nom</Label>
+                  <Label htmlFor="prenom">Prénom</Label>
                   <Input
-                    id="lastName"
-                    name="lastName"
-                    value={formData.lastName}
+                    id="prenom"
+                    name="prenom"
+                    value={formData.prenom}
                     onChange={handleChange}
-                    placeholder="Nom"
+                    placeholder="Prénom"
                     required
                     disabled={isLoading}
-                    className={errors.lastName ? "border-red-500" : ""}
+                    className={errors.prenom ? "border-red-500" : ""}
                   />
-                  {errors.lastName && (
-                    <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                  {errors.prenom && (
+                    <p className="text-red-500 text-xs mt-1">{errors.prenom}</p>
                   )}
                 </div>
 
@@ -208,36 +181,36 @@ export default function Register() {
 
                 {/* Phone Number */}
                 <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">Numéro de téléphone</Label>
+                  <Label htmlFor="telephone">Numéro de téléphone</Label>
                   <Input
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
+                    id="telephone"
+                    name="telephone"
+                    value={formData.telephone}
                     onChange={handleChange}
                     placeholder="12345678"
                     required
                     disabled={isLoading}
-                    className={errors.phoneNumber ? "border-red-500" : ""}
+                    className={errors.telephone ? "border-red-500" : ""}
                   />
-                  {errors.phoneNumber && (
-                    <p className="text-red-500 text-xs mt-1">{errors.phoneNumber}</p>
+                  {errors.telephone && (
+                    <p className="text-red-500 text-xs mt-1">{errors.telephone}</p>
                   )}
                 </div>
 
                 {/* Password */}
                 <div className="space-y-2">
-                  <Label htmlFor="password">Mot de passe</Label>
+                  <Label htmlFor="plainPassword">Mot de passe</Label>
                   <div className="relative">
                     <Input
-                      id="password"
-                      name="password"
+                      id="plainPassword"
+                      name="plainPassword"
                       type={showPassword ? "text" : "password"}
-                      value={formData.password}
+                      value={formData.plainPassword}
                       onChange={handleChange}
                       placeholder="••••••••"
                       required
                       disabled={isLoading}
-                      className={errors.password ? "border-red-500" : ""}
+                      className={errors.plainPassword ? "border-red-500" : ""}
                     />
                     <button
                       type="button"
@@ -251,8 +224,8 @@ export default function Register() {
                       )}
                     </button>
                   </div>
-                  {errors.password && (
-                    <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+                  {errors.plainPassword && (
+                    <p className="text-red-500 text-xs mt-1">{errors.plainPassword}</p>
                   )}
                 </div>
 

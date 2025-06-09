@@ -1,14 +1,14 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@/lib/types';
 import { users } from '@/lib/mockData';
 import { toast } from '@/hooks/use-toast';
+import { authService, RegisterPayload, LoginPayload } from "@/services/authService";
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (userData: Partial<User>, password: string) => Promise<boolean>;
+  register: (userData: RegisterPayload) => Promise<boolean>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => Promise<boolean>;
   updatePassword: (oldPassword: string, newPassword: string) => Promise<boolean>;
@@ -19,70 +19,40 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Check if user is logged in from localStorage
     const storedUser = localStorage.getItem('autowise-user');
-    if (storedUser) {
+    const token = authService.getToken();
+    if (storedUser && token) {
       try {
         setUser(JSON.parse(storedUser));
       } catch (e) {
         localStorage.removeItem('autowise-user');
+        authService.clearToken();
       }
     }
     setIsLoading(false);
   }, []);
 
-  // Amélioré pour faciliter la connexion admin
+  // Nouvelle fonction login réelle
   const login = async (email: string, password: string) => {
     setIsLoading(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Special handling for admin login
-    if (email.toLowerCase() === "admin@autowise.com" && password === "admin123") {
-      const adminUser: User = {
-        id: "admin-1",
-        role: "admin",
-        email: "admin@autowise.com",
-        firstName: "Admin",
-        lastName: "AutoWise",
-        phoneNumber: "12345678",
-        createdAt: new Date().toISOString(),
-        notificationPreferences: {
-          email: true,
-          browser: true,
-          sms: false,
-        },
-        profilePicture: "/placeholder.svg",
-      };
-      
-      setUser(adminUser);
-      localStorage.setItem('autowise-user', JSON.stringify(adminUser));
+    try {
+      // Appel à /auth pour obtenir le token
+      const token = await authService.login({ email, password });
+      // Appel à /api/user/me pour obtenir le profil utilisateur
+      const userProfile = await authService.getUserProfile();
+      setUser(userProfile);
+      localStorage.setItem('autowise-user', JSON.stringify(userProfile));
       setIsLoading(false);
       return true;
-    }
-    
-    // Regular user login
-    const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    
-    if (foundUser) {
-      // Dans une app réelle, on validerait le mot de passe ici
-      setUser(foundUser);
-      localStorage.setItem('autowise-user', JSON.stringify(foundUser));
-      setIsLoading(false);
-      toast({
-        title: "Connexion réussie",
-        description: `Bienvenue, ${foundUser.firstName} ${foundUser.lastName}`,
-      });
-      return true;
-    } else {
+    } catch (error: any) {
       toast({
         title: "Échec de connexion",
-        description: "Email ou mot de passe incorrect",
+        description: error.message || "Erreur lors de la connexion.",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -90,62 +60,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Mock register functionality
-  const register = async (userData: Partial<User>, password: string) => {
+  // Nouvelle fonction register réelle
+  const register = async (userData: RegisterPayload) => {
     setIsLoading(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Check if email already exists
-    const emailExists = users.some(u => u.email.toLowerCase() === userData.email?.toLowerCase());
-    
-    if (emailExists) {
+    try {
+      const data = await authService.register(userData);
+      if (!data) {
+        toast({
+          title: "Erreur d'inscription",
+          description: "Réponse inattendue du serveur.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return false;
+      }
+      toast({
+        title: "Inscription réussie !",
+        description: "Vérifiez votre email pour activer votre compte.",
+      });
+      setIsLoading(false);
+      return true;
+    } catch (error: any) {
       toast({
         title: "Échec de l'inscription",
-        description: "Cet email est déjà utilisé",
+        description: error.message || "Erreur lors de l'inscription.",
         variant: "destructive",
       });
       setIsLoading(false);
       return false;
     }
-
-    // Create new user
-    const newUser: User = {
-      id: `user-${Math.random().toString(36).substring(2, 9)}`,
-      role: "client",
-      email: userData.email || "",
-      firstName: userData.firstName || "",
-      lastName: userData.lastName || "",
-      phoneNumber: userData.phoneNumber || "",
-      createdAt: new Date().toISOString(),
-      notificationPreferences: {
-        email: true,
-        browser: true,
-        sms: false,
-      },
-      profilePicture: "/placeholder.svg",
-    };
-    
-    // Add to users array (in a real app, this would be a DB operation)
-    users.push(newUser);
-    
-    // Log user in
-    setUser(newUser);
-    localStorage.setItem('autowise-user', JSON.stringify(newUser));
-    
-    toast({
-      title: "Inscription réussie",
-      description: "Votre compte a été créé avec succès",
-    });
-    
-    setIsLoading(false);
-    return true;
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('autowise-user');
+    authService.clearToken();
     toast({
       title: "Déconnexion réussie",
       description: "À bientôt !",

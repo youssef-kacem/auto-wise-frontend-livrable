@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -94,17 +93,16 @@ export default function Messages() {
   };
 
   // Filter conversations by search term
-  const filteredConversations = searchTerm
+  const filteredConversations = searchTerm && Array.isArray(conversations)
     ? conversations.filter((conv) => {
-        const otherUser = users.find((u) => u.id === conv.userId);
+        const otherUser = Array.isArray(users) ? users.find((u) => u.id === conv.userId) : null;
         if (!otherUser) return false;
-
         return (
-          otherUser.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          otherUser.lastName.toLowerCase().includes(searchTerm.toLowerCase())
+          typeof otherUser.firstName === 'string' && otherUser.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          typeof otherUser.lastName === 'string' && otherUser.lastName.toLowerCase().includes(searchTerm.toLowerCase())
         );
       })
-    : conversations;
+    : Array.isArray(conversations) ? conversations : [];
 
   // Start chat with admin if no conversations
   const startChatWithAdmin = () => {
@@ -166,7 +164,7 @@ export default function Messages() {
                   <div className="p-4 text-center">
                     <p>Chargement des conversations...</p>
                   </div>
-                ) : filteredConversations.length === 0 ? (
+                ) : !Array.isArray(filteredConversations) || filteredConversations.length === 0 ? (
                   <div className="p-4 text-center">
                     <p className="text-gray-500 mb-4">Aucune conversation</p>
                     <Button onClick={startChatWithAdmin} className="text-sm">
@@ -176,9 +174,9 @@ export default function Messages() {
                   </div>
                 ) : (
                   filteredConversations.map((conversation) => {
-                    const otherUser = users.find(
+                    const otherUser = Array.isArray(users) ? users.find(
                       (u) => u.id === conversation.userId
-                    );
+                    ) : null;
                     if (!otherUser) return null;
 
                     return (

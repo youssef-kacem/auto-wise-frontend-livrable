@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -82,7 +81,7 @@ export function FavoritesList({ isHistory = false }: FavoritesListProps) {
   }
 
   // Affichage si aucun favori
-  if (favorites.length === 0) {
+  if (!Array.isArray(favorites) || favorites.length === 0) {
     return (
       <Card className="text-center p-8">
         <CardHeader>
@@ -124,7 +123,7 @@ export function FavoritesList({ isHistory = false }: FavoritesListProps) {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {favorites.map((car) => (
+        {Array.isArray(favorites) && favorites.map((car) => (
           <Card key={car.id} className="overflow-hidden">
             <CardContent className="p-0">
               {/* Image */}
