@@ -2,6 +2,7 @@
 export interface User {
   id: string;
   role: "client" | "admin";
+  roles?: string[]; // Ajouté pour supporter les rôles multiples (ex: ["ROLE_ADMIN"])
   email: string;
   firstName: string;
   lastName: string;

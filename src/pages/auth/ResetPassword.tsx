@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldCheck } from "lucide-react";
+import { authService } from "@/services/authService";
 
 const resetPasswordSchema = z
   .object({
@@ -24,8 +25,13 @@ type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 export default function ResetPassword() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Get token from URL
+  const searchParams = new URLSearchParams(location.search);
+  const token = searchParams.get("token");
 
   const {
     register,
@@ -36,34 +42,25 @@ export default function ResetPassword() {
     resolver: zodResolver(resetPasswordSchema),
   });
 
-  const mutation = useMutation({
-    mutationFn: async (data: ResetPasswordFormValues) => {
-      // Simuler un appel API
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      // Simuler une réussite ou une erreur
-      if (data.password === "erreur1234") {
-        throw new Error("Erreur lors de la réinitialisation du mot de passe.");
-      }
-      return true;
-    },
-    onSuccess: () => {
+  const onSubmit = async (data: ResetPasswordFormValues) => {
+    setError(null);
+    setSuccess(null);
+    if (!token) {
+      setError("Lien de réinitialisation invalide ou expiré.");
+      return;
+    }
+    try {
+      await authService.resetPassword(token, data.password);
       setSuccess("Votre mot de passe a été réinitialisé avec succès ! Vous pouvez maintenant vous connecter.");
       setError(null);
       reset();
       setTimeout(() => {
         navigate("/login");
       }, 2500);
-    },
-    onError: (err: any) => {
-      setError(err.message || "Une erreur est survenue.");
+    } catch (e: any) {
+      setError(e.message || "Une erreur est survenue.");
       setSuccess(null);
-    },
-  });
-
-  const onSubmit = (data: ResetPasswordFormValues) => {
-    setError(null);
-    setSuccess(null);
-    mutation.mutate(data);
+    }
   };
 
   return (
@@ -75,7 +72,7 @@ export default function ResetPassword() {
         </CardHeader>
         <CardContent>
           {success && (
-            <Alert variant="success" className="mb-4">
+            <Alert variant="default" className="mb-4">
               <AlertTitle>Succès</AlertTitle>
               <AlertDescription>{success}</AlertDescription>
             </Alert>
@@ -96,7 +93,7 @@ export default function ResetPassword() {
                 type="password"
                 autoComplete="new-password"
                 {...register("password")}
-                disabled={isSubmitting || mutation.isLoading}
+                disabled={isSubmitting}
                 className={errors.password ? "border-red-500" : ""}
                 placeholder="Entrez un nouveau mot de passe"
               />
@@ -113,7 +110,7 @@ export default function ResetPassword() {
                 type="password"
                 autoComplete="new-password"
                 {...register("confirmPassword")}
-                disabled={isSubmitting || mutation.isLoading}
+                disabled={isSubmitting}
                 className={errors.confirmPassword ? "border-red-500" : ""}
                 placeholder="Confirmez le mot de passe"
               />
@@ -124,8 +121,7 @@ export default function ResetPassword() {
             <Button
               type="submit"
               className="w-full bg-autowise-blue hover:bg-autowise-navy"
-              disabled={isSubmitting || mutation.isLoading}
-              loading={isSubmitting || mutation.isLoading}
+              disabled={isSubmitting}
             >
               Réinitialiser le mot de passe
             </Button>

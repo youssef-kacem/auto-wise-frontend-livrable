@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -21,6 +21,23 @@ export default function Login() {
   const [isAdminLogin, setIsAdminLogin] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [loginSuccess, setLoginSuccess] = useState(false);
+
+  useEffect(() => {
+    if (loginSuccess && user) {
+      // Redirection intelligente après login
+      const from = (location.state as any)?.from;
+      if (from) {
+        navigate(from, { replace: true });
+      } else {
+        if (Array.isArray(user.roles) && user.roles.includes("ROLE_ADMIN")) {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
+      }
+    }
+  }, [loginSuccess, user, location.state, navigate]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -36,13 +53,7 @@ export default function Login() {
           title: "Connexion réussie",
           description: isAdminLogin ? "Bienvenue dans l'interface administrateur" : "Bienvenue sur AutoWise",
         });
-        // Redirection intelligente après login
-        const from = (location.state as any)?.from;
-        if (from) {
-          navigate(from, { replace: true });
-        } else {
-          navigate(isAdminLogin ? "/admin" : "/");
-        }
+        setLoginSuccess(true);
       }
     } catch (error: any) {
       if (error.violations) {

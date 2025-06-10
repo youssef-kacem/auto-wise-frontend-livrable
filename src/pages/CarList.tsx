@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -13,6 +12,7 @@ export default function CarList() {
   const [filteredCars, setFilteredCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCars = async () => {
@@ -21,8 +21,9 @@ export default function CarList() {
         const carsData = await carService.getAllCars();
         setCars(carsData);
         setFilteredCars(carsData);
-      } catch (error) {
-        console.error("Error fetching cars:", error);
+      } catch (err) {
+        console.error("Error fetching cars:", err);
+        setError("Failed to load cars. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -45,21 +46,20 @@ export default function CarList() {
   }) => {
     setLoading(true);
     try {
-      // Convert the dateRange format if it exists
       const convertedFilters = {
         ...filters,
-        dateRange: filters.dateRange 
-          ? { 
-              from: new Date(filters.dateRange.startDate), 
-              to: new Date(filters.dateRange.endDate) 
-            } 
-          : undefined
+        dateRange: filters.dateRange
+          ? {
+              from: new Date(filters.dateRange.startDate),
+              to: new Date(filters.dateRange.endDate),
+            }
+          : undefined,
       };
-      
       const filteredCars = await carService.searchCars(convertedFilters);
       setFilteredCars(filteredCars);
-    } catch (error) {
-      console.error("Error filtering cars:", error);
+    } catch (err) {
+      console.error("Error filtering cars:", err);
+      setError("Failed to apply filters. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,8 @@ export default function CarList() {
       (car) =>
         car.brand.toLowerCase().includes(value) ||
         car.model.toLowerCase().includes(value) ||
-        car.category.toLowerCase().includes(value)
+        car.category.toLowerCase().includes(value) ||
+        car.location.toLowerCase().includes(value)
     );
     setFilteredCars(results);
   };
@@ -97,13 +98,19 @@ export default function CarList() {
           <div className="relative mb-6">
             <input
               type="text"
-              placeholder="Rechercher par marque, modèle ou catégorie..."
+              placeholder="Rechercher par marque, modèle, catégorie ou lieu..."
               value={searchTerm}
               onChange={handleSearch}
-              className="w-full p-3 pr-10 border rounded-lg"
+              className="w-full p-3 pr-10 border rounded-lg focus:ring-2 focus:ring-autowise-blue focus:border-transparent"
             />
             <Search className="absolute right-3 top-3 text-gray-400" />
           </div>
+
+          {error && (
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
+              <p>{error}</p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Filter Sidebar */}
