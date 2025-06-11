@@ -26,6 +26,7 @@ export const authService = {
     try {
       response = await fetch(`${API_URL}/api/user/register`, {
         method: "POST",
+        
         headers: { "Content-Type": "application/ld+json" },
         body: JSON.stringify(payload),
       });
@@ -74,7 +75,18 @@ export const authService = {
     }
     // Stocke le token JWT
     localStorage.setItem("autowise-token", data.token);
-    return data.token;
+
+    // Fetch user profile to get roles
+    let user = null;
+    try {
+      user = await authService.getUserProfile();
+    } catch (e) {
+      // If fetching user profile fails, clear token and throw error
+      authService.clearToken();
+      throw { message: "Impossible de récupérer le profil utilisateur après connexion." };
+    }
+
+    return { token: data.token, user };
   },
 
   saveToken(token: string) {
@@ -97,6 +109,40 @@ export const authService = {
     });
     if (!response.ok) {
       throw new Error("Impossible de récupérer le profil utilisateur.");
+    }
+    return response.json();
+  },
+
+  async requestPasswordReset(email: string) {
+    const response = await fetch(`${API_URL}/api/user/request-password-reset`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/ld+json',
+      },
+      body: JSON.stringify({ email }),
+    });
+    if (!response.ok) {
+      let data = null;
+      try { data = await response.json(); } catch {}
+      throw new Error((data && (data.message || data.detail)) || "Erreur lors de la demande de réinitialisation.");
+    }
+    return response.json();
+  },
+
+  async resetPassword(token: string, password: string) {
+    const response = await fetch(`${API_URL}/api/user/reset-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/ld+json',
+      },
+      body: JSON.stringify({ token, password }),
+    });
+    if (!response.ok) {
+      let data = null;
+      try { data = await response.json(); } catch {}
+      throw new Error((data && (data.message || data.detail)) || "Erreur lors de la réinitialisation du mot de passe.");
     }
     return response.json();
   },

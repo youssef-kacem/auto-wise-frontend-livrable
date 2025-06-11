@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Mail, CheckCircle2, AlertTriangle } from "lucide-react";
+import { authService } from "@/services/authService";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email({ message: "Veuillez entrer un email valide." }),
@@ -32,16 +33,14 @@ export default function ForgotPassword() {
     defaultValues: { email: "" },
   });
 
-  const onSubmit = (data: ForgotPasswordForm) => {
+  const onSubmit = async (data: ForgotPasswordForm) => {
     setError(null);
-    // Simulation d'appel API
-    setTimeout(() => {
-      if (data.email === "user@exemple.com") {
-        setSuccess(true);
-      } else {
-        setError("Aucun compte n'est associé à cet email.");
-      }
-    }, 1200);
+    try {
+      await authService.requestPasswordReset(data.email);
+      setSuccess(true);
+    } catch (e: any) {
+      setError(e.message || "Erreur lors de la demande de réinitialisation.");
+    }
   };
 
   return (
@@ -54,7 +53,7 @@ export default function ForgotPassword() {
           </p>
 
           {success ? (
-            <Alert className="mb-4" variant="success">
+            <Alert className="mb-4" variant="default">
               <CheckCircle2 className="h-5 w-5 text-green-600 mr-2" />
               <AlertTitle>Lien envoyé !</AlertTitle>
               <AlertDescription>

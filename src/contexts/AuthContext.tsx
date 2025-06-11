@@ -41,12 +41,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Appel à /auth pour obtenir le token
-      const token = await authService.login({ email, password });
-      // Appel à /api/user/me pour obtenir le profil utilisateur
-      const userProfile = await authService.getUserProfile();
-      setUser(userProfile);
-      localStorage.setItem('autowise-user', JSON.stringify(userProfile));
+      // Utilise la nouvelle signature de login qui retourne { token, user }
+      const { token, user } = await authService.login({ email, password });
+      setUser(user);
+      localStorage.setItem('autowise-user', JSON.stringify(user));
       setIsLoading(false);
       return true;
     } catch (error: any) {
@@ -143,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const isAuthenticated = !!user;
-  const isAdmin = user?.role === "admin";
+  const isAdmin = Array.isArray(user?.roles) && user.roles.includes("ROLE_ADMIN");
 
   return (
     <AuthContext.Provider value={{
